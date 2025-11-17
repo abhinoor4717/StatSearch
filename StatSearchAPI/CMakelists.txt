@@ -1,0 +1,13 @@
+project(StatSearchAPI VERSION 1.0 DESCRIPTION "API for StatSearch App." LANGUAGES CXX)
+
+add_library(StatSearchAPI STATIC 
+    src/api.cpp
+)
+
+target_include_directories(StatSearchAPI PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/StatSearchAPI
+    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/json
+    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/cpp-httplib
+)
+
+target_compile_features(StatSearchAPI PUBLIC cxx_std_17)

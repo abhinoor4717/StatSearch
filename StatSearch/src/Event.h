@@ -7,5 +7,5 @@ public:
     Event(SDL_Event& e) : NativeEvent(e), Handled(false) {}
     
     SDL_Event& NativeEvent;
-    bool Handled = false;;
+    bool Handled = false;
 };

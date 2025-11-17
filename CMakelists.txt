@@ -11,8 +11,10 @@ set(SDL_SHARED OFF CACHE BOOL "Build SDL3 as a shared library" FORCE)
 set(SDL_STATIC ON CACHE BOOL "Build SDL3 as a static library" FORCE)
 add_subdirectory(vendor/SDL EXCLUDE_FROM_ALL)
 
+add_subdirectory(StatSearchAPI)
+
 # --- IMGUI sources ---
-set(IMGUI_SOURCES 
+set(IMGUI_SOURCES
     vendor/imgui/imgui.cpp
     vendor/imgui/imgui_demo.cpp
     vendor/imgui/imgui_draw.cpp
@@ -35,11 +37,15 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_options(${PROJECT_NAME} PRIVATE)
 target_compile_definitions(${PROJECT_NAME} PRIVATE SDL_MAIN_HANDLED)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-static)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3-static ws2_32 StatSearchAPI)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     vendor/SDL/include
     vendor/spdlog/include
     vendor/imgui
+    vendor/cpp-httplib
+    vendor/json
+
+    StatSearchAPI/include
 )

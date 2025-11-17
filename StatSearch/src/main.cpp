@@ -1,11 +1,29 @@
 #include "Application.h"
 #include "imgui.h"
 #include "Logger.h"
+#include <iostream>
+
+#include "httplib.h"
+#include "nlohmann/json.hpp"
+#include "StatSearchAPI/api.h"
+
+using json = nlohmann::json;
 
 class StatSearch : public Application {
 public:
     StatSearch() : Application("StatSearch", 800, 600) {
         GetWindow().SetResizeable(true);
+
+        StatSearchAPI::Greet();
+
+        // httplib::Client cli("http://jsonplaceholder.typicode.com");
+
+        // auto res = cli.Get("/posts/1");
+        // if (res) {
+        //     json data = json::parse(res->body);
+        // } else {
+        //     std::cout << "Request failed!\n";
+        // }
     }
 
     void OnImGuiRender() override { 
@@ -34,7 +52,48 @@ public:
 
                 ImGui::Separator();
 
-                ImGui::Dummy(ImVec2(0, 10));
+                {
+                    static char searchBuf[32];
+                    static const char* leagues[] = { "NBA", "WNBA", "NFL", "NHL", "MLB" };
+                    static unsigned int selectedLeague = 0;
+
+                    // Calculate total available width
+                    float totalWidth = ImGui::GetContentRegionAvail().x;
+
+                    // Define relative widths
+                    float dropdownWidth = totalWidth * 0.2f;   // 20% for dropdown
+                    float buttonWidth   = totalWidth * 0.15f;  // 15% for button
+                    float inputWidth    = totalWidth - dropdownWidth - buttonWidth - 10.0f; // remaining width minus spacing
+
+                    // Dropdown
+                    ImGui::PushItemWidth(dropdownWidth);
+                    if (ImGui::BeginCombo("##League", leagues[selectedLeague])) {
+                        for (int i = 0; i < IM_ARRAYSIZE(leagues); i++) {
+                            bool isSelected = (selectedLeague == i);
+                            if (ImGui::Selectable(leagues[i], isSelected))
+                                selectedLeague = i;
+                            if (isSelected)
+                                ImGui::SetItemDefaultFocus();
+                        }
+                        ImGui::EndCombo();
+                    }
+                    ImGui::PopItemWidth();
+
+                    ImGui::SameLine();
+
+                    // Search input
+                    ImGui::PushItemWidth(inputWidth);
+                    ImGui::InputTextWithHint("##SearchBar", "Enter a player", searchBuf, IM_ARRAYSIZE(searchBuf));
+                    ImGui::PopItemWidth();
+
+                    ImGui::SameLine();
+
+                    // Search button
+                    if (ImGui::Button("Search", ImVec2(buttonWidth, 0))) {
+                        std::cout << "Searching for: " << searchBuf << " in " << leagues[selectedLeague] << std::endl;
+                    }
+
+                }
                 
             }
             ImGui::End();
