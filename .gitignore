@@ -1,1 +1,45 @@
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.o
+*.lo
+*.la
+*.al
+*.pyc
+*.pyo
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
+*.log
+*.tmp
+*.temp
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.dmg
+*.iso
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Sensitive information (example)
+.env
+config.local.php
+
 build/
+vsbuild/

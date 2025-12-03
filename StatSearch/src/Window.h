@@ -20,6 +20,20 @@ public:
 
     void OnResize(unsigned int w, unsigned int h);
 
+    inline void SetFullScreen(bool fullscreen) { SDL_SetWindowFullscreen(m_NativeWindow, fullscreen); }
+    inline void SetMaximized(bool maximized) {
+        Uint32 flags = SDL_GetWindowFlags(m_NativeWindow);
+        if (flags & SDL_WINDOW_MAXIMIZED && !maximized) {
+            SDL_RestoreWindow(m_NativeWindow);
+        }
+        else {
+            // Window must be resizable for Maximize to work on most systems
+            if (flags & SDL_WINDOW_RESIZABLE) {
+                SDL_MaximizeWindow(m_NativeWindow);
+            }
+        }
+    }
+
 private:
     std::string m_Title;
     unsigned int m_Width;

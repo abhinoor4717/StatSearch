@@ -2,6 +2,8 @@ project(StatSearchAPI VERSION 1.0 DESCRIPTION "API for StatSearch App." LANGUAGE
 
 add_library(StatSearchAPI STATIC 
     src/api.cpp
+    src/Player.cpp
+    src/Search.cpp
 )
 
 target_include_directories(StatSearchAPI PUBLIC 
