@@ -5,7 +5,7 @@ Get sports stats fast
 
 ### Dependencies
 - [CMake](https://cmake.org/download/)
-- [GCC]()
+- GCC OR Visual Studio
 
 ---
 
