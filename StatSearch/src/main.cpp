@@ -1,12 +1,8 @@
 #include "Application.h"
 #include "imgui.h"
-#include "Logger.h"
 #include <iostream>
 
-#include "nlohmann/json.hpp"
 #include "StatSearchAPI/api.h"
-
-using json = nlohmann::json;
 
 class StatSearch : public Application {
 public:
@@ -107,9 +103,12 @@ public:
 
                 if (ImGui::Button("Search", ImVec2(buttonWidth, 0))) {
                     if (!std::string(searchBuf).empty()) {
-                        auto player = StatSearchAPI::Search::searchByName(m_Players, searchBuf);
+                        auto res = StatSearchAPI::Search::searchByName(m_Players, searchBuf);
                         playerResults.clear();
-                        playerResults.push_back(player);
+                        if (!res.empty())
+                            for (auto p : res) {
+                                playerResults.push_back(p);
+                            }
                     }
                 }
 
@@ -249,8 +248,6 @@ public:
         ImGui::PopStyleColor();
         ImGui::PopStyleVar();
     }
-
-
 
 private:
     std::vector<StatSearchAPI::Player> m_Players;

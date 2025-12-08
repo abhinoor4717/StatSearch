@@ -7,11 +7,10 @@
 namespace StatSearchAPI {
     class Search {
     public:
-        // Search by exact name match
-        static Player searchByName(const std::vector<Player>& players, const std::string& name);
-        // Filter players by team
-        static void filterByTeam(const std::vector<Player>& players, const std::string& team);
-        // TEMP: Load CSV – final version needs correct column order
-        static std::vector<Player> loadCSV(const std::string& filename);
+        static std::vector<Player> loadPlayersFromCSV(const std::string& filename);
+        // Search by name (partial match, case-insensitive)
+        static std::vector<Player> searchByName(std::vector<Player>& players, const std::string& query);
+        // Filter by team
+        static void filterByTeam(const std::vector<Player>& players);
     };
 }
