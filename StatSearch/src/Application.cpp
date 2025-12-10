@@ -13,6 +13,7 @@ Application::Application(const char* title, unsigned int w, unsigned int h)
         }
 
         SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
+        LOG_ERROR("LOG TEST", "");
 
         m_Window = std::make_unique<Window>(title, w, h);
         

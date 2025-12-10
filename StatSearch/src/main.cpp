@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "Logger.h"
 #include "imgui.h"
 #include <iostream>
 
@@ -9,16 +10,9 @@ public:
     StatSearch() : Application("StatSearch", 1080, 720) {
         GetWindow().SetResizeable(true);
         GetWindow().SetMaximized(true);
-        m_Players.emplace_back("Lebron James", 10000000, "Forward", 40, 0, "t", 67, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
-        m_Players.emplace_back("Stephen Curry", 10000000, "Forward", 40, 0, "t", 41, 0, 0, 0, 0, 0, 0, 0);
+        m_Players = StatSearchAPI::Util::loadPlayersFromCSV("../StatSearchAPI/assets/database.csv");
+        m_Results = m_Players;
+        m_Query = "";
     }
 
     void OnImGuiRender() override {
@@ -67,10 +61,7 @@ public:
                 ImGui::Spacing();
             }
 
-            static std::vector<StatSearchAPI::Player> playerResults = m_Players;
-            static char searchBuf[128] = "";
-
-            // ---- SEARCH BAR ---- //
+            // ---- SEARCH BAR + FILTER ---- //
             {
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 10));
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 8.0f);
@@ -81,35 +72,51 @@ public:
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.6f, 1.0f, 1.0f));
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.4f, 0.8f, 1.0f));
 
-                // Recalculate search bar width each frame
+                // Recalculate width
                 float currentContentWidth = ImGui::GetContentRegionAvail().x;
-                float maxSearchWidth = 800.0f;
-                float searchBarWidth = currentContentWidth > maxSearchWidth ? maxSearchWidth : currentContentWidth - 40;
-                float leftPadding = (currentContentWidth - searchBarWidth) * 0.5f;
+                float maxSearchWidth = 900.0f;
+                float barWidth = currentContentWidth > maxSearchWidth ? maxSearchWidth : currentContentWidth - 40;
+                float leftPad = (currentContentWidth - barWidth) * 0.5f;
 
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + leftPadding);
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + leftPad);
                 ImGui::BeginGroup();
 
-                // Responsive button sizing
-                float inputWidth = searchBarWidth * 0.68f;
-                float buttonWidth = searchBarWidth * 0.27f;
-                float spacing = searchBarWidth * 0.05f;
+                // FIELDS FOR UI
+                static char searchBuf[128] = "";
+                static const char* filterOptions[] = {
+                    "None",
+                    "Team", "Position", "Age",
+                    "Minutes",
+                    "FG%", "3PT%",
+                    "Points", "Assists", "Rebounds",
+                    "Turnovers", "Steals", "Blocks",
+                    "Salary"
+                };
+                static int selectedFilter = 0;
 
+                float inputWidth = barWidth * 0.50f;
+                float filterWidth = barWidth * 0.25f;
+                float buttonWidth = barWidth * 0.25f;
+
+                // SEARCH INPUT
                 ImGui::PushItemWidth(inputWidth);
-                ImGui::InputTextWithHint("##SearchBar", "Search player by name...", searchBuf, IM_ARRAYSIZE(searchBuf));
+                ImGui::InputTextWithHint("##Search", "Search player by name...", searchBuf, IM_ARRAYSIZE(searchBuf));
+                ImGui::PopItemWidth();
+                m_Query = searchBuf;
+
+                ImGui::SameLine();
+
+                // FILTER DROPDOWN
+                ImGui::PushItemWidth(filterWidth);
+                ImGui::Combo("##FilterDropdown", &selectedFilter, filterOptions, IM_ARRAYSIZE(filterOptions));
                 ImGui::PopItemWidth();
 
-                ImGui::SameLine(0, spacing);
+                ImGui::SameLine();
 
+                // SEARCH BUTTON
                 if (ImGui::Button("Search", ImVec2(buttonWidth, 0))) {
-                    if (!std::string(searchBuf).empty()) {
-                        auto res = StatSearchAPI::Search::searchByName(m_Players, searchBuf);
-                        playerResults.clear();
-                        if (!res.empty())
-                            for (auto p : res) {
-                                playerResults.push_back(p);
-                            }
-                    }
+                    m_Query = searchBuf;
+                    search(std::string(searchBuf));
                 }
 
                 ImGui::EndGroup();
@@ -122,12 +129,13 @@ public:
                 ImGui::Spacing();
             }
 
+
             // ---- PLAYER CARDS CONTAINER ---- //
             ImGui::BeginChild("PlayerCardsRegion", ImVec2(0, 0), false);
 
-            for (size_t i = 0; i < playerResults.size(); i++)
+            for (size_t i = 0; i < m_Results.size(); i++)
             {
-                auto& p = playerResults[i];
+                auto& p = m_Results[i];
 
                 // Get available width and calculate responsive layout
                 float availableWidth = ImGui::GetContentRegionAvail().x;
@@ -186,11 +194,11 @@ public:
 
                 ImGui::TextColored(labelColor, "FG%%:");
                 ImGui::SameLine();
-                ImGui::TextColored(highlightColor, "%.1f%%", p.FGPercentage);
+                ImGui::TextColored(highlightColor, "%.1f%%", p.FGPercentage * 100);
 
                 ImGui::TextColored(labelColor, "3PT%%:");
                 ImGui::SameLine();
-                ImGui::TextColored(highlightColor, "%.1f%%", p.ThreePercentage);
+                ImGui::TextColored(highlightColor, "%.1f%%", p.ThreePercentage * 100);
 
                 if (numColumns > 1) ImGui::NextColumn();
                 else ImGui::Spacing();
@@ -249,8 +257,31 @@ public:
         ImGui::PopStyleVar();
     }
 
+    void search(const std::string& query) {
+        if (!std::string(query).empty()) {
+            auto res = StatSearchAPI::Search::searchByName(m_Players, query);
+            m_Results.clear();
+            if (!res.empty())
+                for (auto p : res)
+                    m_Results.push_back(p);
+        }
+        else {
+            m_Results = m_Players;
+        }
+    }
+
+    void OnEvent(Event& e) override {
+        if (e.NativeEvent.type == SDL_EVENT_KEY_UP) {
+            if (e.NativeEvent.key.key == SDLK_RETURN) {
+                search(m_Query);
+            }
+        }
+    }
+
 private:
     std::vector<StatSearchAPI::Player> m_Players;
+    std::vector<StatSearchAPI::Player> m_Results;
+    std::string m_Query;
 };
 
 int main(int argc, char* argv[]) {
