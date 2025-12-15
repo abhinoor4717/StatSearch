@@ -83,16 +83,6 @@ public:
 
                 // FIELDS FOR UI
                 static char searchBuf[128] = "";
-                static const char* filterOptions[] = {
-                    "None",
-                    "Team", "Position", "Age",
-                    "Minutes",
-                    "FG%", "3PT%",
-                    "Points", "Assists", "Rebounds",
-                    "Turnovers", "Steals", "Blocks",
-                    "Salary"
-                };
-                static int selectedFilter = 0;
 
                 float inputWidth = barWidth * 0.50f;
                 float filterWidth = barWidth * 0.25f;
@@ -108,7 +98,7 @@ public:
 
                 // FILTER DROPDOWN
                 ImGui::PushItemWidth(filterWidth);
-                ImGui::Combo("##FilterDropdown", &selectedFilter, filterOptions, IM_ARRAYSIZE(filterOptions));
+                ImGui::Combo("##FilterDropdown", &m_selectedFilter, m_filterOptions, 14);
                 ImGui::PopItemWidth();
 
                 ImGui::SameLine();
@@ -258,18 +248,30 @@ public:
     }
 
     void search(const std::string& query) {
-        if (!std::string(query).empty()) {
-            auto res = StatSearchAPI::Search::searchByName(m_Players, query);
-            m_Results.clear();
-            if (!res.empty())
-                for (auto p : res)
-                    m_Results.push_back(p);
+        m_Results.clear();
+
+        std::cout << "Query: " << query << ", filter: " << m_filterOptions[m_selectedFilter] << std::endl;
+
+        if (query.empty()) {
+            if (m_selectedFilter == 0) {
+                m_Results = m_Players;
+            }
+            else {
+                m_Results = StatSearchAPI::Sort::sortPlayers(m_Players, m_filterOptions[m_selectedFilter]);
+            }
         }
         else {
-            m_Results = m_Players;
+            if (m_selectedFilter == 0) {
+                m_Results = StatSearchAPI::Search::searchByName(m_Players, query);
+            }
+            else {
+                auto res = StatSearchAPI::Search::searchByName(m_Players, query);
+                m_Results = StatSearchAPI::Sort::sortPlayers(res, m_filterOptions[m_selectedFilter]);
+            }
         }
-    }
 
+        m_Query.clear();
+    }
     void OnEvent(Event& e) override {
         if (e.NativeEvent.type == SDL_EVENT_KEY_UP) {
             if (e.NativeEvent.key.key == SDLK_RETURN) {
@@ -282,6 +284,17 @@ private:
     std::vector<StatSearchAPI::Player> m_Players;
     std::vector<StatSearchAPI::Player> m_Results;
     std::string m_Query;
+
+    const char* m_filterOptions[14] = {
+                    "None",
+                    "Team", "Position", "Age",
+                    "Minutes",
+                    "FG%", "3PT%",
+                    "Points", "Assists", "Rebounds",
+                    "Turnovers", "Steals", "Blocks",
+                    "Salary"
+    };
+    int m_selectedFilter = 0;
 };
 
 int main(int argc, char* argv[]) {

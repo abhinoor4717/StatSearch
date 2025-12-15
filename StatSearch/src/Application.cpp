@@ -13,7 +13,6 @@ Application::Application(const char* title, unsigned int w, unsigned int h)
         }
 
         SDL_SetLogPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
-        LOG_ERROR("LOG TEST", "");
 
         m_Window = std::make_unique<Window>(title, w, h);
         
@@ -75,12 +74,12 @@ void Application::Run() {
         float dt = (float)(current_time - last_time) / frequency;
 
         OnUpdate(dt);
+        OnRender();
         
         ImGui_ImplSDLRenderer3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
         
-        OnRender();
         OnImGuiRender();
 
         ImGui::Render();

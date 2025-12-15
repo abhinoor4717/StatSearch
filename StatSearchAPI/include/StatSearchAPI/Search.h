@@ -7,7 +7,6 @@
 namespace StatSearchAPI {
     class Search {
     public:
-        static std::vector<Player> loadPlayersFromCSV(const std::string& filename);
         // Search by name (partial match, case-insensitive)
         static std::vector<Player> searchByName(std::vector<Player>& players, const std::string& query);
         // Filter by team
